@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Noctua Social — Rede Social de Estudos & Rotina</title>
+    <link rel="icon" href="iconenoctua.png" type="image/png">
+    
+    
+    <meta name="description"
+        content="A rede social híbrida que une a dinâmica visual do Instagram com o micro-blogging do Twitter, focada em estudos, dúvidas, rotinas e salas ao vivo." />
+
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <!-- ==========================================================================
+       1. TELA DEDICADA DE AUTENTICAÇÃO (LOGIN & CADASTRO - SEM SPOILER DO APP)
+       ========================================================================== -->
+    <div id="auth-screen">
+        <div class="auth-card-container">
+
+            <!-- Mascote Animada no Topo -->
+            <div class="auth-mascot-wrapper">
+                <video class="owl-video-auth" src="corujinha mexendo-Picsart-BackgroundRemover.webm" autoplay loop muted
+                    playsinline></video>
+                <div class="owl-speech-bubble" id="authOwlSpeech">Psiu! Bem-vindo de volta ao seu espaço de estudos!
+                </div>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" id="authTabLogin" onclick="switchAuthTab('login')">Entrar</button>
+                <button class="auth-tab-btn" id="authTabRegister" onclick="switchAuthTab('register')">Criar
+                    Conta</button>
+            </div>
+
+            <div class="auth-msg-alert" id="authAlertBox"></div>
+
+            <!-- Formulário de Login -->
+            <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label">E-mail ou Nome de Usuário</label>
+                    <input type="text" class="form-input" id="loginIdentifier"
+                        placeholder="Insira seu email ou usuário aqui" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Senha</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required />
+                </div>
+                <button type="submit" class="btn-submit-auth" id="btnLoginSubmit">Acessar Noctua</button>
+            </form>
+
+            <!-- Formulário de Cadastro com Foto de Perfil -->
+            <form id="registerForm" onsubmit="handleRegisterSubmit(event)" style="display: none;">
+
+                <!-- Upload de Foto de Perfil no Próprio Cadastro -->
+                <div class="auth-avatar-picker-row">
+                    <img src="https://i.pinimg.com/236x/a8/da/22/a8da222be70a71e7858bf752065d5cc3.jpg"
+                        id="regAvatarPreview" class="auth-avatar-preview" alt="Foto de Perfil" />
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">Foto de Perfil</div>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="file" id="regAvatarFileInput" accept="image/*" style="display: none;"
+                                onchange="handleRegAvatarUpload(event)" />
+                            <button type="button" class="btn-profile-edit"
+                                style="padding: 4px 10px; font-size: 0.75rem;"
+                                onclick="document.getElementById('regAvatarFileInput').click()">Escolher Foto</button>
+                            <button type="button" class="btn-profile-edit"
+                                style="padding: 4px 10px; font-size: 0.75rem;" onclick="setRegMascotAvatar()">Usar
+                                Coruja 🦉</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Nome Completo / Perfil</label>
+                    <input type="text" class="form-input" id="regFullName" placeholder="Seu nome de exibição"
+                        required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nome de Usuário (@handle único)</label>
+                    <input type="text" class="form-input" id="regUsername" placeholder="ex: usuarioteste"
+                        oninput="checkRegUsername(this.value)" required />
+                    <div id="regUsernameFeedback" style="font-size: 0.75rem; margin-top: 3px;"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" class="form-input" id="regEmail" placeholder="seuemail@exemplo.com" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Senha</label>
+                    <input type="password" class="form-input" id="regPassword" placeholder="Mínimo 6 caracteres"
+                        minlength="6" required />
+                </div>
+                <button type="submit" class="btn-submit-auth" id="btnRegisterSubmit">Cadastrar e Personalizar</button>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+       2. TELA DEDICADA DE ONBOARDING (EXCLUSIVA PÓS-CADASTRO COM CORUJA ACENANDO)
+       ========================================================================== -->
+    <div id="onboarding-screen">
+        <div class="onboarding-card-container">
+
+            <!-- Corujinha Acenando Exclusiva do Onboarding -->
+            <video class="owl-video-waving" src="corujinha acenando-Picsart-BackgroundRemover.webm" autoplay loop muted
+                playsinline></video>
+
+            <h2 style="font-family: var(--font-title); font-size: 1.4rem; font-weight: 800; margin-bottom: 6px;">
+                Boas-vindas ao Noctua! 🦉👋</h2>
+            <p style="color: var(--text-secondary); font-size: 0.88rem;" id="onboardingQuestionTitle">Como você ficou
+                sabendo do aplicativo?</p>
+
+            <div class="onboarding-step-indicator">
+                <div class="step-dot active" id="dotStep1"></div>
+                <div class="step-dot" id="dotStep2"></div>
+                <div class="step-dot" id="dotStep3"></div>
+                <div class="step-dot" id="dotStep4"></div>
+            </div>
+
+            <!-- Passo 1: Como ficou sabendo -->
+            <div id="onboardingStep1" class="onboarding-step-view">
+                <div class="question-options-grid">
+                    <div class="option-btn" onclick="selectOnboardingOption('source', 'Amigos / Colegas', this)"><i
+                            class="fa-solid fa-user-group"></i> Amigos / Colegas</div>
+                    <div class="option-btn" onclick="selectOnboardingOption('source', 'TikTok / Reels', this)"><i
+                            class="fa-brands fa-tiktok"></i> TikTok / Reels</div>
+                    <div class="option-btn" onclick="selectOnboardingOption('source', 'Instagram', this)"><i
+                            class="fa-brands fa-instagram"></i> Instagram</div>
+                    <div class="option-btn" onclick="selectOnboardingOption('source', 'Escola / Faculdade', this)"><i
+                            class="fa-solid fa-school"></i> Escola / Faculdade</div>
+                </div>
+            </div>
+
+            <!-- Passo 2: Principal Interesse -->
+            <div id="onboardingStep2" class="onboarding-step-view" style="display: none;">
+                <div class="question-options-grid">
+                    <div class="option-btn" onclick="selectOnboardingOption('goal', 'ENEM & Vestibulares', this)"><i
+                            class="fa-solid fa-graduation-cap"></i> ENEM / Vestibular</div>
+                    <div class="option-btn" onclick="selectOnboardingOption('goal', 'Faculdade & Graduação', this)"><i
+                            class="fa-solid fa-building-columns"></i> Faculdade</div>
+                    <div class="option-btn" onclick="selectOnboardingOption('goal', 'Programação & Tech', this)"><i
+                            class="fa-solid fa-laptop-code"></i> Programação</div>
+                    <div class="option-btn" onclick="selectOnboardingOption('goal', 'Rotina, Foco & Lazer', this)"><i
+                            class="fa-solid fa-mug-hot"></i> Rotina & Lazer</div>
+                </div>
+            </div>
+
+            <!-- Passo 3: Meta Diária de Foco -->
+            <div id="onboardingStep3" class="onboarding-step-view" style="display: none;">
+                <div class="question-options-grid">
+                    <div class="option-btn" onclick="selectOnboardingOption('dailyGoal', '30 minutos / dia', this)"><i
+                            class="fa-solid fa-battery-half"></i> 30 min / dia</div>
+                    <div class="option-btn" onclick="selectOnboardingOption('dailyGoal', '1 a 2 horas / dia', this)"><i
+                            class="fa-solid fa-battery-three-quarters"></i> 1 a 2h / dia</div>
+                    <div class="option-btn" onclick="selectOnboardingOption('dailyGoal', '3 a 4 horas / dia', this)"><i
+                            class="fa-solid fa-battery-full"></i> 3 a 4h / dia</div>
+                    <div class="option-btn" onclick="selectOnboardingOption('dailyGoal', 'Foco Intenso 5h+', this)"><i
+                            class="fa-solid fa-bolt"></i> Foco Intenso 5h+</div>
+                </div>
+            </div>
+
+            <!-- Passo 4: Tópicos de Preferência -->
+            <div id="onboardingStep4" class="onboarding-step-view" style="display: none;">
+                <div class="question-options-grid">
+                    <div class="option-btn selected" onclick="toggleTopicOption('Matemática & Física', this)"><i
+                            class="fa-solid fa-calculator"></i> Exatas</div>
+                    <div class="option-btn selected" onclick="toggleTopicOption('Programação', this)"><i
+                            class="fa-solid fa-code"></i> Programação</div>
+                    <div class="option-btn" onclick="toggleTopicOption('Redação & Humanas', this)"><i
+                            class="fa-solid fa-pen-nib"></i> Redação</div>
+                    <div class="option-btn" onclick="toggleTopicOption('Idiomas & Inglês', this)"><i
+                            class="fa-solid fa-globe"></i> Idiomas</div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <button class="btn-profile-edit" id="btnOnboardingBack" onclick="prevOnboardingStep()"
+                    style="display: none;">Voltar</button>
+                <button class="btn-publish" id="btnOnboardingNext" onclick="nextOnboardingStep()"
+                    style="margin-left: auto;">Avançar <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+       3. APLICAÇÃO PRINCIPAL SPA (APENAS EXIBIDA QUANDO AUTENTICADO)
+       ========================================================================== -->
+    <div id="app-root">
+
+        <!-- SIDEBAR ESQUERDA (DESKTOP) -->
+        <aside class="main-sidebar" id="mainSidebar">
+            <div class="brand-logo" onclick="navigateTo('feed')">
+                <div class="owl-icon-mini"><i class="fa-solid fa-feather-pointed"></i></div>
+                <h1>Noctua</h1>
+            </div>
+
+            <nav class="nav-links">
+                <a class="nav-item active" id="nav-feed" onclick="navigateTo('feed')">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Início</span>
+                </a>
+                <a class="nav-item" id="nav-explore" onclick="navigateTo('explore')">
+                    <i class="fa-solid fa-compass"></i>
+                    <span>Explorar</span>
+                </a>
+                <a class="nav-item" id="nav-reels" onclick="navigateTo('reels')">
+                    <i class="fa-solid fa-clapperboard"></i>
+                    <span>Reels / Pílulas</span>
+                </a>
+                <a class="nav-item" id="nav-rooms" onclick="navigateTo('rooms')">
+                    <i class="fa-solid fa-headset"></i>
+                    <span>Salas de Estudo</span>
+                    <span class="badge" id="sidebarRoomsCount">0 salas</span>
+                </a>
+                <a class="nav-item" id="nav-direct" onclick="navigateTo('direct')">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Mensagens</span>
+                    <span class="badge" id="sidebarUnreadCount">0</span>
+                </a>
+                <a class="nav-item" id="nav-profile" onclick="viewMyProfile()">
+                    <i class="fa-solid fa-circle-user"></i>
+                    <span>Meu Perfil</span>
+                </a>
+                <a class="nav-item" id="nav-settings" onclick="navigateTo('settings')">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Configurações</span>
+                </a>
+
+                <button class="btn-create-post" onclick="openCreatePostModal()">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Publicar</span>
+                </button>
+            </nav>
+
+            <!-- Perfil na Sidebar & Alternância Rápida -->
+            <div class="sidebar-profile" id="sidebarProfileCard" onclick="viewMyProfile()">
+                <div class="avatar-container">
+                    <img src="" alt="Avatar" class="avatar-circle" id="sidebarAvatar" />
+                    <div class="online-dot" id="sidebarOnlineDot"></div>
+                </div>
+                <div class="profile-info">
+                    <div class="name" id="sidebarFullName">Carregando...</div>
+                    <div class="username" id="sidebarUsername">@usuario</div>
+                </div>
+                <button class="btn-theme-toggle" onclick="event.stopPropagation(); toggleTheme();"
+                    title="Alternar Modo Claro / Escuro"
+                    style="color: var(--text-secondary); font-size: 1.2rem; padding: 6px;">
+                    <i class="fa-solid fa-moon" id="themeIconSidebar"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="main-content">
+            <div class="content-container" id="contentContainer">
+
+                <!-- 1. FEED VIEW -->
+                <section id="view-feed" class="app-view">
+
+                    <!-- Barra de Stories (24h) -->
+                    <input type="file" id="storyFileInput" accept="image/*,video/*" style="display: none;"
+                        onchange="handleStoryFileUpload(event)" />
+                    <div class="stories-container" id="storiesList">
+                        <div class="story-card" onclick="triggerAddStory()">
+                            <div class="story-ring add-story">
+                                <img src="" class="story-avatar" id="myStoryAvatar" alt="Meu Story" />
+                                <div class="add-story-badge"><i class="fa-solid fa-plus"></i></div>
+                            </div>
+                            <span class="story-username">Seu Story (24h)</span>
+                        </div>
+                    </div>
+
+                    <!-- Filtros de Feed -->
+                    <div class="feed-header-tabs">
+                        <button class="feed-tab active" onclick="filterFeed('all', this)">
+                            <i class="fa-solid fa-sparkles"></i> Geral
+                        </button>
+                        <button class="feed-tab" onclick="filterFeed('doubt', this)">
+                            <i class="fa-solid fa-circle-question"></i> Dúvidas & Exercícios
+                        </button>
+                        <button class="feed-tab" onclick="filterFeed('study', this)">
+                            <i class="fa-solid fa-book-bookmark"></i> Resumos & Anotações
+                        </button>
+                    </div>
+
+                    <!-- Quick Post Composer -->
+                    <div class="quick-composer">
+                        <div class="composer-top">
+                            <img src="" class="post-user-avatar" id="composerAvatar" alt="Avatar" />
+                            <div class="composer-input-area">
+                                <textarea class="composer-textarea" id="quickPostText"
+                                    placeholder="Compartilhe uma dúvida, resumo ou momento de estudo..."></textarea>
+
+                                <div class="composer-preview-img" id="composerImgPreviewBox">
+                                    <img id="composerImgPreview" src="" alt="Preview" />
+                                    <button class="btn-remove-preview" onclick="clearComposerImg()"><i
+                                            class="fa-solid fa-xmark"></i></button>
+                                </div>
+
+                                <div class="composer-tags">
+                                    <span class="tag-badge" onclick="toggleComposerTag(this, 'Dúvida')">#Dúvida</span>
+                                    <span class="tag-badge" onclick="toggleComposerTag(this, 'Resumo')">#Resumo</span>
+                                    <span class="tag-badge"
+                                        onclick="toggleComposerTag(this, 'Matemática')">#Matemática</span>
+                                    <span class="tag-badge"
+                                        onclick="toggleComposerTag(this, 'Programação')">#Programação</span>
+                                    <span class="tag-badge" onclick="toggleComposerTag(this, 'Rotina')">#Rotina</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="composer-bottom">
+                            <div class="composer-actions">
+                                <label class="composer-btn-tool" title="Adicionar Imagem" style="cursor: pointer;">
+                                    <i class="fa-regular fa-image"></i>
+                                    <input type="file" id="composerFileInput" accept="image/*" style="display: none;"
+                                        onchange="handleComposerImgUpload(event)" />
+                                </label>
+                                <button class="composer-btn-tool" title="Adicionar Bloco de Código / Exercício"
+                                    onclick="promptInsertExercise()">
+                                    <i class="fa-solid fa-code"></i>
+                                </button>
+                                <button class="composer-btn-tool" title="Definir Prioridade / Matéria"
+                                    onclick="promptInsertSubject()">
+                                    <i class="fa-solid fa-tags"></i>
+                                </button>
+                            </div>
+                            <button class="btn-publish" onclick="publishQuickPost()">Publicar</button>
+                        </div>
+                    </div>
+
+                    <!-- Feed Posts Container -->
+                    <div id="feedPostsContainer">
+                        <!-- Posts renderizados dinamicamente -->
+                    </div>
+
+                </section>
+
+                <!-- 2. EXPLORAR VIEW -->
+                <section id="view-explore" class="explore-view app-view">
+                    <div class="search-bar-modern">
+                        <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
+                        <input type="text" id="exploreSearchInput"
+                            placeholder="Pesquisar estudantes, matérias, tags (#ENEM, #Python)..."
+                            oninput="handleExploreSearch(this.value)" />
+                    </div>
+
+                    <!-- Resultados de Pessoas na Busca -->
+                    <div id="explorePeopleResults" style="display: none; margin-bottom: 18px;"></div>
+
+                    <!-- Assuntos em Alta -->
+                    <div class="trending-card" id="exploreTrendingCard">
+                        <h3><i class="fa-solid fa-fire" style="color: var(--accent-warning);"></i> Assuntos em Alta nos
+                            Estudos</h3>
+                        <div class="trending-list" id="trendingList">
+                            <div class="trending-item" onclick="filterByTag('ENEM2026')">
+                                <div class="trending-info">
+                                    <span class="category">Vestibulares • Em alta</span>
+                                    <div class="tag-title">#ENEM2026</div>
+                                </div>
+                                <i class="fa-solid fa-arrow-trend-up" style="color: var(--accent-study);"></i>
+                            </div>
+                            <div class="trending-item" onclick="filterByTag('Calculo')">
+                                <div class="trending-info">
+                                    <span class="category">Exatas • Discussões ativas</span>
+                                    <div class="tag-title">#Cálculo</div>
+                                </div>
+                                <i class="fa-solid fa-arrow-trend-up" style="color: var(--accent-study);"></i>
+                            </div>
+                            <div class="trending-item" onclick="filterByTag('Programação')">
+                                <div class="trending-info">
+                                    <span class="category">Programação • Dicas</span>
+                                    <div class="tag-title">#Programação</div>
+                                </div>
+                                <i class="fa-solid fa-arrow-trend-up" style="color: var(--accent-study);"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grade de Exploração -->
+                    <div class="profile-posts-grid" id="exploreGrid">
+                        <!-- Renderizado via JS -->
+                    </div>
+                </section>
+
+                <!-- 3. REELS VIEW (VERTICAL SCROLL INSTAGRAM / TIKTOK STYLE) -->
+                <section id="view-reels" class="reels-view app-view">
+                    <div
+                        style="width: 100%; max-width: 420px; margin-bottom: 12px; display: flex; justify-content: center; align-items: center;">
+                        <h3 style="font-family: var(--font-title); font-size: 1.2rem; font-weight: 800;">Reels & Dicas
+                            Rápidas 🎬</h3>
+                    </div>
+
+                    <div class="reels-feed-container" id="reelsFeedContainer">
+                        <!-- Reels injetados via JS -->
+                    </div>
+
+                    <button class="btn-post-reel-fab" onclick="openCreateReelModal()" title="Postar Reel">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </section>
+
+                <!-- 4. SALAS DE ESTUDO & AUDIO LOUNGE VIEW -->
+                <section id="view-rooms" class="study-rooms-view app-view">
+                    <div class="rooms-top-bar">
+                        <div>
+                            <h2
+                                style="font-family: var(--font-title); font-size: 1.5rem; font-weight: 800; margin-bottom: 4px;">
+                                Salas de Foco & Chat de Voz</h2>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">Participe de salas de estudo com
+                                Pomodoro sincronizado e voz em tempo real.</p>
+                        </div>
+                        <button class="btn-create-room" onclick="openCreateRoomModal()">
+                            <i class="fa-solid fa-plus"></i> Criar Sala de Estudo
+                        </button>
+                    </div>
+
+                    <div class="rooms-grid" id="roomsListGrid">
+                        <!-- Salas geradas via JS -->
+                    </div>
+                </section>
+
+                <!-- 5. DIRECT MESSAGES / CHAT VIEW (REALTIME) -->
+                <section id="view-direct" class="direct-view app-view">
+                    <div class="direct-layout">
+                        <div class="chat-sidebar">
+                            <div class="chat-sidebar-header">
+                                <h2>Mensagens</h2>
+                                <i class="fa-solid fa-pen-to-square" style="color: var(--primary); cursor: pointer;"
+                                    title="Nova conversa" onclick="promptNewChat()"></i>
+                            </div>
+                            <div class="chat-user-list" id="chatConversationsList">
+                                <!-- Lista de conversas com presença online/offline em tempo real -->
+                            </div>
+                        </div>
+
+                        <div class="chat-main-window">
+                            <div class="chat-header" id="activeChatHeader">
+                                <div class="avatar-container">
+                                    <img src="" class="post-user-avatar" id="activeChatAvatar" alt="Avatar" />
+                                    <div class="online-dot" id="activeChatOnlineStatus"></div>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700;" id="activeChatName">Selecione uma conversa</div>
+                                    <div style="font-size: 0.75rem; color: var(--accent-study);"
+                                        id="activeChatStatusLabel">Online</div>
+                                </div>
+                            </div>
+
+                            <div class="chat-messages-area" id="chatMessagesBox">
+                                <!-- Mensagens em tempo real -->
+                            </div>
+
+                            <div class="chat-attachment-preview-bar" id="chatAttachmentPreviewBar" style="display: none;">
+                                <img id="chatAttachmentPreviewImg" src="" alt="Anexo" style="display: none;" />
+                                <video id="chatAttachmentPreviewVideo" src="" muted style="display: none;"></video>
+                                <span style="flex: 1; font-size: 0.8rem; color: var(--text-secondary);">Anexo pronto para envio</span>
+                                <button class="btn-remove-preview" onclick="clearChatAttachment()"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+
+                            <div class="chat-input-bar">
+                                <input type="file" id="chatAttachmentInput" accept="image/*,video/*"
+                                    style="display: none;" onchange="handleChatAttachmentUpload(event)" />
+                                <button class="btn-chat-attach" title="Enviar foto, vídeo ou GIF"
+                                    onclick="document.getElementById('chatAttachmentInput').click()">
+                                    <i class="fa-solid fa-paperclip"></i>
+                                </button>
+                                <input type="text" class="chat-input-field" id="chatInputMessage"
+                                    placeholder="Envie uma mensagem ou dúvida em tempo real..."
+                                    onkeypress="if(event.key === 'Enter') sendChatMessage()" />
+                                <button class="btn-publish" onclick="sendChatMessage()" style="padding: 10px 18px;"><i
+                                        class="fa-solid fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. PERFIL DO USUÁRIO (INSTAGRAM STYLE) -->
+                <section id="view-profile" class="profile-view app-view">
+
+                    <div class="profile-header">
+                        <img src="" class="profile-avatar-large" id="profilePageAvatar" alt="Foto do Perfil" />
+
+                        <div class="profile-meta-info">
+                            <div class="profile-name-row">
+                                <span class="profile-username-main" id="profilePageUsername">@usuario</span>
+                                <div class="profile-action-btns" id="profileActionBtnsBox">
+                                    <button class="btn-profile-edit" onclick="navigateTo('settings')">Editar
+                                        Perfil</button>
+                                    <button class="btn-profile-edit" onclick="copyProfileLink()"><i
+                                            class="fa-solid fa-share-nodes"></i> Compartilhar</button>
+                                </div>
+                            </div>
+
+                            <div class="profile-stats-row">
+                                <div class="stat-item"><strong id="profilePostsCount">0</strong> publicações</div>
+                                <div class="stat-item stat-item-clickable" onclick="openFollowListModal('followers')"><strong id="profileFollowersCount">0</strong> seguidores</div>
+                                <div class="stat-item stat-item-clickable" onclick="openFollowListModal('following')"><strong id="profileFollowingCount">0</strong> seguindo</div>
+                            </div>
+
+                            <div class="profile-bio">
+                                <div class="full-name" id="profilePageFullName">Nome Completo</div>
+                                <p id="profilePageBioText">Sem biografia cadastrada.</p>
+                                <span class="study-badge-tag" id="profilePageInterestBadge"><i
+                                        class="fa-solid fa-graduation-cap"></i> Foco: Estudos</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Destaques (Highlights Reais) -->
+                    <div class="highlights-container" id="profileHighlightsContainer">
+                        <!-- Renderizado dinamicamente via JS com foto/capa do dispositivo -->
+                    </div>
+
+                    <!-- Abas do Perfil -->
+                    <div class="profile-nav-tabs">
+                        <div class="profile-tab active" onclick="switchProfileTab('grid', this)"><i
+                                class="fa-solid fa-table-cells"></i> Publicações</div>
+                        <div class="profile-tab" onclick="switchProfileTab('doubts', this)"><i
+                                class="fa-solid fa-comments"></i> Dúvidas & Tweets</div>
+                        <div class="profile-tab" onclick="switchProfileTab('saved', this)"><i
+                                class="fa-solid fa-bookmark"></i> Salvos</div>
+                        <div class="profile-tab" onclick="switchProfileTab('badges', this)"><i
+                                class="fa-solid fa-award"></i> Conquistas</div>
+                    </div>
+
+                    <!-- Conteúdo da Aba Ativa -->
+                    <div id="profileTabContent">
+                        <div class="profile-posts-grid" id="profileGridContainer">
+                            <!-- Fotos renderizadas via JS -->
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- 7. CONFIGURAÇÕES VIEW -->
+                <section id="view-settings" class="settings-view app-view">
+                    <div class="settings-card">
+                        <h3><i class="fa-solid fa-circle-user" style="color: var(--primary);"></i> Editar Perfil</h3>
+
+                        <div class="form-group">
+                            <label class="form-label">Foto de Perfil</label>
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <img src="" id="settingsAvatarPreview" class="avatar-circle"
+                                    style="width: 60px; height: 60px;" alt="Avatar" />
+                                <input type="file" id="settingsAvatarFile" accept="image/*" style="display: none;"
+                                    onchange="handleAvatarChange(event)" />
+                                <button class="btn-profile-edit"
+                                    onclick="document.getElementById('settingsAvatarFile').click()">Trocar Foto</button>
+                                <button class="btn-profile-edit" onclick="setMascotAsAvatar()">Usar Coruja 🦉</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Nome de Exibição</label>
+                            <input type="text" class="form-input" id="settingsInputFullName" value="" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Nome de Usuário (@handle único)</label>
+                            <input type="text" class="form-input" id="settingsInputUsername" value=""
+                                oninput="validateUsernameUniqueness(this.value)" />
+                            <div id="usernameStatusMsg"
+                                style="font-size: 0.78rem; margin-top: 4px; color: var(--accent-study);"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Biografia</label>
+                            <textarea class="form-input" id="settingsInputBio" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Meta Diária de Foco</label>
+                            <select class="form-input" id="settingsInputDailyGoal">
+                                <option value="">Selecione sua meta...</option>
+                                <option value="30 minutos / dia">30 min / dia</option>
+                                <option value="1 a 2 horas / dia">1 a 2h / dia</option>
+                                <option value="3 a 4 horas / dia">3 a 4h / dia</option>
+                                <option value="Foco Intenso 5h+">Foco Intenso 5h+</option>
+                            </select>
+                        </div>
+
+                        <button class="btn-publish" onclick="saveProfileSettings()">Salvar Alterações</button>
+                    </div>
+
+                    <!-- Preferências & Aparência -->
+                    <div class="settings-card">
+                        <h3><i class="fa-solid fa-sliders" style="color: var(--secondary);"></i> Preferências do App
+                        </h3>
+
+                        <div class="setting-row">
+                            <div class="setting-text">
+                                <div class="title">Modo Escuro / Claro</div>
+                                <div class="desc">Alterne entre o tema escuro e o tema claro limpo.</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="settingsThemeSwitch" onchange="toggleTheme()" checked />
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-text">
+                                <div class="title">Conta Privada</div>
+                                <div class="desc">Apenas pessoas que você aprovar poderão ver suas publicações.</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="settingsPrivacySwitch"
+                                    onchange="toggleAccountPrivacy(this.checked)" />
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Conexão de dados sincronizada automaticamente em segundo plano -->
+
+                    <div style="margin-top: 20px;">
+                        <button class="btn-profile-edit"
+                            style="color: var(--accent-danger); border-color: rgba(239, 68, 68, 0.3);"
+                            onclick="logoutUser()">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Encerrar Sessão (Sair)
+                        </button>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+
+        <!-- SIDEBAR DIREITA (DESKTOP) -->
+        <aside class="right-sidebar">
+            <!-- Widget Pomodoro Rápido -->
+            <div class="trending-card" style="margin-bottom: 0;">
+                <h3><i class="fa-solid fa-clock" style="color: var(--accent-study);"></i> Foco Rápido</h3>
+                <div style="text-align: center; padding: 10px 0;">
+                    <div style="font-family: var(--font-title); font-size: 2.2rem; font-weight: 800; color: #38bdf8;"
+                        id="sidebarPomodoroTimer">25:00</div>
+                    <div style="display: flex; gap: 8px; justify-content: center; margin-top: 10px;">
+                        <button class="btn-publish" style="padding: 6px 16px; font-size: 0.82rem;"
+                            id="btnSidebarPomodoro" onclick="toggleSidebarPomodoro()">Iniciar</button>
+                        <button class="btn-profile-edit" style="padding: 6px 12px; font-size: 0.82rem;"
+                            onclick="resetSidebarPomodoro()">Zerar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Salas Ativas Widget -->
+            <div class="trending-card" style="margin-bottom: 0;">
+                <h3><i class="fa-solid fa-headphones" style="color: var(--primary);"></i> Salas de Estudo</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px;" id="sidebarRoomsList">
+                    <!-- Injetado via JS -->
+                </div>
+            </div>
+
+            <!-- Colegas de Estudo -->
+            <div class="trending-card">
+                <h3><i class="fa-solid fa-users" style="color: var(--secondary);"></i> Estudantes Online</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;" id="sidebarFollowSuggestions">
+                    <!-- Injetado via JS -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- BOTTOM NAV (MOBILE) -->
+        <nav class="bottom-nav">
+            <div class="bottom-nav-item active" id="bnav-feed" onclick="navigateTo('feed')">
+                <i class="fa-solid fa-house"></i>
+                <span>Início</span>
+            </div>
+            <div class="bottom-nav-item" id="bnav-explore" onclick="navigateTo('explore')">
+                <i class="fa-solid fa-compass"></i>
+                <span>Explorar</span>
+            </div>
+            <div class="bottom-nav-item" onclick="openCreatePostModal()">
+                <i class="fa-solid fa-circle-plus" style="color: var(--primary); font-size: 1.8rem;"></i>
+            </div>
+            <div class="bottom-nav-item" id="bnav-rooms" onclick="navigateTo('rooms')">
+                <i class="fa-solid fa-headset"></i>
+                <span>Salas</span>
+            </div>
+            <div class="bottom-nav-item" id="bnav-profile" onclick="viewMyProfile()">
+                <i class="fa-solid fa-circle-user"></i>
+                <span>Perfil</span>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- ==========================================================================
+       MODAIS DO SISTEMA
+       ========================================================================== -->
+
+    <!-- MODAL CRIAR PUBLICAÇÃO -->
+    <div class="modal-backdrop" id="createPostModal">
+        <div class="modal-box">
+            <i class="fa-solid fa-xmark btn-modal-close" onclick="closeModal('createPostModal')"></i>
+            <h3 style="font-family: var(--font-title); font-size: 1.25rem; font-weight: 800; margin-bottom: 16px;">Criar
+                Publicação</h3>
+
+            <div class="form-group">
+                <label class="form-label">Tipo de Publicação</label>
+                <select class="form-input" id="postModalType" onchange="handlePostTypeChange(this.value)">
+                    <option value="general">🌟 Rotina & Momento de Estudo</option>
+                    <option value="doubt">❓ Dúvida / Exercício (Twitter Style)</option>
+                    <option value="study">📖 Resumo / Anotação de Aula</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Texto / Descrição</label>
+                <textarea class="form-input" id="postModalText" rows="4"
+                    placeholder="Escreva o que está pensando, formulando ou estudando..."></textarea>
+            </div>
+
+            <div class="form-group" id="postModalExerciseContainer" style="display: none;">
+                <label class="form-label">Bloco do Exercício / Código / Equação</label>
+                <textarea class="form-input" id="postModalExerciseCode" rows="3" style="font-family: var(--font-code);"
+                    placeholder="Ex: Calcule o valor do limite quando x -> 0..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Imagem ou Foto (Opcional)</label>
+                <input type="file" id="postModalFileInput" class="form-input" accept="image/*"
+                    onchange="previewPostModalImage(event)" />
+                <div id="postModalImgPreviewBox"
+                    style="margin-top: 10px; display: none; max-height: 180px; overflow: hidden; border-radius: var(--radius-md);">
+                    <img id="postModalImgPreview" src="" style="width: 100%; height: 180px; object-fit: cover;"
+                        alt="Preview" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tags da Matéria / Assunto</label>
+                <input type="text" class="form-input" id="postModalTags" placeholder="ex: #Cálculo #Engenharia #Foco" />
+            </div>
+
+            <button class="btn-publish" style="width: 100%; padding: 12px;" onclick="submitFullPost()">Publicar no
+                Noctua</button>
+        </div>
+    </div>
+
+    <!-- MODAL CRIAR REEL -->
+    <div class="modal-backdrop" id="createReelModal">
+        <div class="modal-box">
+            <i class="fa-solid fa-xmark btn-modal-close" onclick="closeModal('createReelModal')"></i>
+            <h3 style="font-family: var(--font-title); font-size: 1.25rem; font-weight: 800; margin-bottom: 16px;">
+                Postar Novo Reel 🎬</h3>
+
+            <div class="form-group">
+                <label class="form-label">Arquivo de Vídeo (.mp4, .webm) ou Link</label>
+                <input type="file" id="reelFileInput" class="form-input" accept="video/*"
+                    onchange="handleReelFileUpload(event)" />
+                <input type="text" id="reelVideoUrlInput" class="form-input" placeholder="Ou cole a URL do vídeo (.mp4)"
+                    style="margin-top: 8px;" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Legenda do Reel</label>
+                <textarea class="form-input" id="reelCaptionInput" rows="3"
+                    placeholder="Explique a dica de estudo em poucas palavras..."></textarea>
+            </div>
+
+            <button class="btn-publish" style="width: 100%; padding: 12px;" onclick="submitNewReel()">Publicar
+                Reel</button>
+        </div>
+    </div>
+
+    <!-- MODAL CRIAR SALA DE ESTUDO -->
+    <div class="modal-backdrop" id="createRoomModal">
+        <div class="modal-box">
+            <i class="fa-solid fa-xmark btn-modal-close" onclick="closeModal('createRoomModal')"></i>
+            <h3 style="font-family: var(--font-title); font-size: 1.25rem; font-weight: 800; margin-bottom: 16px;">Criar
+                Sala de Estudo</h3>
+
+            <div class="form-group">
+                <label class="form-label">Título da Sala</label>
+                <input type="text" class="form-input" id="roomInputTitle"
+                    placeholder="Ex: Grupo de Estudos de Programação" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Descrição do Foco</label>
+                <input type="text" class="form-input" id="roomInputDesc"
+                    placeholder="Ex: Resolução de exercícios e foco conjunto 25/5." />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Ícone da Sala</label>
+                <select class="form-input" id="roomInputIcon">
+                    <option value="fa-mug-hot">☕ Café & Pomodoro</option>
+                    <option value="fa-calculator">📐 Exatas & Matemática</option>
+                    <option value="fa-laptop-code">💻 Dev & Programação</option>
+                    <option value="fa-book-open-reader">📚 Biblioteca Silenciosa</option>
+                    <option value="fa-graduation-cap">🎯 Foco ENEM / Concursos</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Privacidade da Sala</label>
+                <select class="form-input" id="roomInputPrivacy" onchange="togglePrivateRoomNotice(this.value)">
+                    <option value="public">🌐 Pública (Qualquer estudante pode entrar)</option>
+                    <option value="private">🔒 Privada (Gera código de acesso para amigos)</option>
+                </select>
+                <div id="privateRoomNotice"
+                    style="display: none; margin-top: 8px; font-size: 0.8rem; color: var(--accent-warning); background: var(--bg-card); padding: 8px 12px; border-radius: var(--radius-sm);">
+                    🔐 Um código de acesso seguro será gerado automaticamente para você repassar aos seus amigos.
+                </div>
+            </div>
+
+            <button class="btn-publish" style="width: 100%; padding: 12px;" onclick="submitNewStudyRoom()">Criar e Abrir
+                Sala</button>
+        </div>
+    </div>
+
+    <!-- MODAL SALA AO VIVO & VOZ REAL -->
+    <div class="modal-backdrop" id="liveRoomModal">
+        <div class="modal-box live-room-modal-box">
+            <i class="fa-solid fa-xmark btn-modal-close" onclick="leaveLiveRoom()"></i>
+
+            <div
+                style="display: flex; align-items: center; justify-content: space-between; padding-right: 30px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="room-icon-box" id="liveRoomIcon"><i class="fa-solid fa-mug-hot"></i></div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <h3 style="font-family: var(--font-title); font-size: 1.2rem; font-weight: 800;"
+                                id="liveRoomTitle">Café Lo-Fi & Pomodoro</h3>
+                            <span id="liveRoomCodeBadge"></span>
+                        </div>
+                        <span style="font-size: 0.78rem; color: var(--accent-study);" id="liveRoomStatusCount"><i
+                                class="fa-solid fa-circle" style="font-size: 0.6rem;"></i> 1 estudante na sala</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn-profile-edit" id="btnToggleAmbientAudio" onclick="toggleAmbientAudio()"
+                        title="Áudio Relaxante de Foco">
+                        <i class="fa-solid fa-volume-high" id="audioIcon"></i> Som Ambiente
+                    </button>
+                    <button class="btn-profile-edit" id="btnDeleteRoomInModal"
+                        style="display: none; color: var(--accent-danger); border-color: rgba(239,68,68,0.3);"
+                        onclick="deleteCurrentRoom()">
+                        <i class="fa-solid fa-trash"></i> Deletar Sala
+                    </button>
+                </div>
+            </div>
+
+            <!-- Barra de Controle de Voz Real -->
+            <div class="voice-controls-bar" style="margin-top: 14px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="btn-voice-mic muted" id="btnVoiceMicToggle" onclick="toggleRealVoiceMic()">
+                        <i class="fa-solid fa-microphone-slash" id="voiceMicIcon"></i>
+                        <span id="voiceMicLabel">Microfone Mutado</span>
+                    </button>
+                    <canvas id="voiceVisualizerCanvas" class="voice-meter-canvas"></canvas>
+                </div>
+                <span style="font-size: 0.78rem; color: var(--text-secondary);" id="voiceStatusHint">Clique para falar
+                    no chat de voz</span>
+            </div>
+
+            <div class="live-room-content">
+                <!-- Pomodoro & Participantes -->
+                <div style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+                    <div class="pomodoro-box">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary);"
+                            id="pomodoroModeLabel">BLOCO DE FOCO</span>
+                        <div class="pomodoro-timer" id="roomPomodoroDisplay">25:00</div>
+                        <div class="pomodoro-controls">
+                            <button class="btn-pomodoro-action" id="btnRoomPomodoroToggle"
+                                onclick="toggleRoomPomodoro()">Iniciar Foco</button>
+                            <button class="btn-profile-edit" onclick="resetRoomPomodoro()">Resetar</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 10px;">Estudantes no Chat de Voz
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;"
+                            id="liveRoomParticipantsGrid">
+                            <!-- Participantes injetados via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bate-papo da Sala -->
+                <div
+                    style="display: flex; flex-direction: column; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-color); overflow: hidden;">
+                    <div
+                        style="padding: 10px 14px; border-bottom: 1px solid var(--border-color); font-weight: 700; font-size: 0.88rem;">
+                        Chat da Sala 💬
+                    </div>
+                    <div style="flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"
+                        id="liveRoomChatBox">
+                        <!-- Mensagens do chat da sala -->
+                    </div>
+                    <div style="padding: 8px 10px; border-top: 1px solid var(--border-color); display: flex; gap: 6px;">
+                        <input type="text" id="liveRoomChatInput" class="form-input"
+                            style="padding: 6px 10px; font-size: 0.82rem;" placeholder="Mande uma mensagem..."
+                            onkeypress="if(event.key==='Enter') sendRoomChatMessage()" />
+                        <button class="btn-publish" style="padding: 6px 12px;" onclick="sendRoomChatMessage()"><i
+                                class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL CRIAR DESTAQUE (HIGHLIGHT DO DISPOSITIVO) -->
+    <div class="modal-backdrop" id="createHighlightModal">
+        <div class="modal-box">
+            <i class="fa-solid fa-xmark btn-modal-close" onclick="closeModal('createHighlightModal')"></i>
+            <h3 style="font-family: var(--font-title); font-size: 1.25rem; font-weight: 800; margin-bottom: 16px;">Novo Destaque 🌟</h3>
+
+            <div class="form-group">
+                <label class="form-label">Título do Destaque</label>
+                <input type="text" class="form-input" id="highlightTitleInput" placeholder="Ex: Resumos, Rotina, Metas, Livros..." required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Emoji de Capa (Opcional)</label>
+                <input type="text" class="form-input" id="highlightEmojiInput" placeholder="Ex: 📚, ☕, 💻, 🎯, 🚀" maxlength="4" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Foto / Capa do seu Dispositivo</label>
+                <input type="file" id="highlightCoverFileInput" class="form-input" accept="image/*" onchange="previewHighlightCover(event)" />
+                <div id="highlightCoverPreviewBox" style="margin-top: 10px; display: none; text-align: center;">
+                    <img id="highlightCoverPreview" src="" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); margin: 0 auto;" alt="Capa" />
+                </div>
+            </div>
+
+            <button class="btn-publish" style="width: 100%; padding: 12px;" onclick="submitNewHighlight()">Salvar Destaque</button>
+        </div>
+    </div>
+
+    <!-- MODAL VISUALIZADOR DE DESTAQUE -->
+    <div class="modal-backdrop story-viewer-modal" id="highlightViewerModal" onclick="closeHighlightViewer()">
+        <div class="story-viewer-box" onclick="event.stopPropagation()">
+            <div class="story-viewer-header">
+                <div class="story-viewer-user">
+                    <span style="font-size: 1.3rem;" id="highlightViewerEmoji">🌟</span>
+                    <span style="font-weight: 700; margin-left: 6px;" id="highlightViewerTitle">Destaque</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button id="btnDeleteHighlight" class="btn-profile-edit" style="display: none; padding: 4px 10px; font-size: 0.75rem; color: var(--accent-danger); border-color: rgba(239,68,68,0.3);" onclick="deleteCurrentHighlight()">
+                        <i class="fa-solid fa-trash"></i> Excluir
+                    </button>
+                    <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem;" onclick="closeHighlightViewer()"></i>
+                </div>
+            </div>
+
+            <img src="" class="story-viewer-img" id="highlightViewerImage" alt="Destaque" style="display: block;" />
+        </div>
+    </div>
+
+    <!-- MODAL VISUALIZADOR DE STORIES (24 HORAS - SUPORTE A FOTO E VÍDEO REAL) -->
+    <div class="modal-backdrop story-viewer-modal" id="storyViewerModal" onclick="closeStoryViewer()">
+        <div class="story-viewer-box" onclick="event.stopPropagation()">
+            <div class="story-progress-bar-container">
+                <div class="story-progress-segment">
+                    <div class="story-progress-fill" id="storyProgressFill"></div>
+                </div>
+            </div>
+
+            <div class="story-viewer-header">
+                <div class="story-viewer-user">
+                    <img src="" class="story-viewer-avatar" id="storyViewerAvatar" alt="Avatar" />
+                    <span style="font-weight: 700;" id="storyViewerUsername">@usuario</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button id="btnDeleteStory" class="btn-profile-edit" style="display: none; padding: 4px 10px; font-size: 0.75rem; color: var(--accent-danger); border-color: rgba(239,68,68,0.3);" onclick="deleteCurrentStory()">
+                        <i class="fa-solid fa-trash"></i> Excluir
+                    </button>
+                    <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem;" onclick="closeStoryViewer()"></i>
+                </div>
+            </div>
+
+            <img src="" class="story-viewer-img" id="storyViewerImage" alt="Story" style="display: none;" />
+            <video src="" class="story-viewer-img" id="storyViewerVideo" autoplay playsinline loop style="display: none; object-fit: contain; background: #000;"></video>
+        </div>
+    </div>
+
+    <!-- MODAL LISTA DE SEGUIDORES / SEGUINDO -->
+    <div class="modal-backdrop" id="followListModal">
+        <div class="modal-box">
+            <i class="fa-solid fa-xmark btn-modal-close" onclick="closeModal('followListModal')"></i>
+            <h3 style="font-family: var(--font-title); font-size: 1.2rem; font-weight: 800; margin-bottom: 14px;" id="followListModalTitle">Seguidores</h3>
+            <div id="followListModalBody" style="display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto;">
+                <!-- Renderizado via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL COMENTÁRIOS DO REEL -->
+    <div class="modal-backdrop" id="reelCommentsModal">
+        <div class="modal-box">
+            <i class="fa-solid fa-xmark btn-modal-close" onclick="closeReelCommentsModal()"></i>
+            <h3 style="font-family: var(--font-title); font-size: 1.2rem; font-weight: 800; margin-bottom: 14px;">Comentários do Reel 💬</h3>
+            <div id="reelCommentsModalBody" style="display: flex; flex-direction: column; gap: 10px; max-height: 45vh; overflow-y: auto; margin-bottom: 14px;">
+                <!-- Renderizado via JS -->
+            </div>
+            <div class="comment-input-row">
+                <input type="text" class="comment-input" id="reelCommentInput" placeholder="Escreva um comentário..." onkeypress="if(event.key==='Enter') submitReelComment()" />
+                <button class="btn-send-comment" onclick="submitReelComment()">Publicar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERLAY DE CARREGAMENTO PÓS LOGIN/CADASTRO -->
+    <div class="app-loading-overlay" id="appLoadingOverlay">
+        <div class="app-loading-box">
+            <div class="app-loading-owl">🦉</div>
+            <div class="app-loading-spinner"></div>
+            <p>Preparando seu espaço de estudos...</p>
+        </div>
+    </div>
+
+    <!-- Main JavaScript File -->
+    <script src="script.js"></script>
+</body>
+
+</html>
